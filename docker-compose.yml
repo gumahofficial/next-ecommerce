@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: next_ecommerce
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/next_ecommerce"
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_xxx"
+      STRIPE_SECRET_KEY: "sk_test_xxx"
+    volumes:
+      - ./:/app
+    depends_on:
+      - db
+
+volumes:
+  postgres-data:
