@@ -1,33 +1,41 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  // create admin user
+  const plainPassword = 'Password123!';
+  const hashedPassword = bcrypt.hashSync(plainPassword, 10);
+
   const admin = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
-    update: {},
+    update: {
+      password: hashedPassword,
+      name: 'Admin',
+      role: 'admin'
+    },
     create: {
       email: 'admin@example.com',
       name: 'Admin',
-      password: 'Password123!'
+      password: hashedPassword,
+      role: 'admin'
     }
   });
 
-  // sample category
   const cat = await prisma.category.upsert({
     where: { slug: 'general' },
     update: {},
     create: { name: 'General', slug: 'general' }
   });
 
-  // sample product
-  const product = await prisma.product.create({
-    data: {
+  await prisma.product.upsert({
+    where: { slug: 'sample-product' },
+    update: {},
+    create: {
       title: 'Sample Product',
       slug: 'sample-product',
       description: 'This is a sample product created by the seed script.',
       price: 19.99,
-      images: [],
+      images: ['/uploads/sample-product.png'],
       categoryId: cat.id,
       variants: {
         create: [
@@ -37,11 +45,11 @@ async function main() {
     }
   });
 
-  console.log('Seed complete:', { adminId: admin.id, productId: product.id });
+  console.log('Seed complete:', { adminId: admin.id, email: admin.email, password: plainPassword });
 }
 
 main()
-  .catch(e => {
+  .catch((e) => {
     console.error(e);
     process.exit(1);
   })
